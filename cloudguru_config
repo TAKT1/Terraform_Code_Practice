@@ -1,0 +1,106 @@
+### Install Unzip & Terraform
+wget https://lien vers terraform
+sudo yum -y install unzip
+unzip terraform
+echo $PATH
+sudo mv terraform /usr/local/bin/
+
+###Install awscli & Ansible
+sudo yum -y install python3-pip
+sudo pip3 install awscli --user
+sudo pip3 install ansible --user
+
+###Prepare ansible conf
+mkdir deploy_iac_tf_ansible
+cd deploy_iac_tf_ansible
+Rajouter le ansible.cfg dans ce dossier
+
+###Prepare awscli conf
+aws configure       # pour mettre l'access Key iD et la secret Access Key, json
+aws ec2 describe-instances
+
+##mettre le terraform policy.json comme policy dans sur AWS via IAM puis créer un user terraform si on veut
+
+##On créer notre backend qui sera un S3 bucket
+aws s3api create-bucket --bucket pourpourpourpourpourpour
+
+##On met le fichier backend.tf dans le dossier deploy_iac_tf_ansible. 
+##On init notre terraform
+terraform init
+##Si une précédente conf existe avec un ancien bucket et on veut re init tou
+terraform init -reconfigure
+##On met la bonne indentation dans le fichier
+terraform fmt
+
+##On créer toute notre config (providers.tf, variables.tf, network.tf)
+#On vérifier les formats
+terraform fmt
+#On vérifie les informations de création de ressources
+terraform validate
+#On montre le résumé des modifs qu'on va appliquer 
+terraform plan
+#On lance l'action!!!!!!
+terraform apply
+#On peut utiliser la commande suivante si on ne veut pas qu'on nous demande si on est sur
+terraform apply --auto-approve
+
+#On peut détruire l'infrastructure avec
+terraform destroy
+
+#Pour activer le logs terraform
+export TF_LOG=DEBUG
+#ensuite je la resupprime
+unset TF_LOG
+
+
+###Une fois l'image ssm indiquée
+
+#On peut voir les fichiers à l'aide de
+aws s3 ls s3://pourpourpourpourpourpourpour
+#On va récupérer le statefile pour checker qu'on a bien le ssm dedans
+aws s3 cp s3://pourpourpourpourpourpourpour/terraformstatefichier .
+
+
+
+
+
+##On créer une keypairs en local (au lieu de la créer sur AWS) et on l'utilise pour les machines
+ssh-keygen -t rsa
+
+
+##On peut utiliser time pour en même temps calculer le temps que prend une commande pour s'exécuter 
+time terraform apply
+
+en ayant utiliser le fichier output, à la fin du apply on a le résultat suivant 
+_______________________
+Outputs:
+
+Jenkins-Main-Node-Public-IP = "54.196.234.182"
+Jenkins-Worker-Node-Public-IP = {
+  "i-06b17ecdbf54b36db" = "34.223.108.158"
+}
+_______________________
+
+
+
+##Ansible
+
+#On doit installer boto3 pour pouvoir utiliser le dynamic inventory d'AWS dans Ansible
+pip3 install boto3 --user 
+
+##Check l'inventory une fois les configs mises en place 
+ansible-inventory --list --yaml
+
+
+Pour installer graphviz permettant de convertir le résultat de terraform graph en jpg 
+terraform graph > tf.dot
+sudo yum -y install graphviz
+dot tf.dot | dot -Tpng -otf.png
+
+
+
+Pour voir si la dernière commande effectuée n'a pas eu d'erreur on peut utiliser :
+echo $?
+
+check si le script est bon
+ansible-playbook --syntax-check -e"passed_in_hosts=localhost" install_jenkins_master.yaml
